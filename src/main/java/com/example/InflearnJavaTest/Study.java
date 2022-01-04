@@ -5,6 +5,21 @@ public class Study {
 
     private int limit;
 
+    private String name;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Study(int limit, String name) {
+        this.limit = limit;
+        this.name = name;
+    }
+
     public Study(int limit) {
         if(limit < 0)
             throw  new IllegalArgumentException("limit는 0보다 커야합니다");
