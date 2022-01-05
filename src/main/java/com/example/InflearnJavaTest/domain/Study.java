@@ -1,4 +1,6 @@
-package com.example.InflearnJavaTest;
+package com.example.InflearnJavaTest.domain;
+
+import java.time.LocalDateTime;
 
 public class Study {
     private StudyStatus status = StudyStatus.DRAFT;
@@ -6,6 +8,22 @@ public class Study {
     private int limit;
 
     private String name;
+
+    private Member owner;
+
+    private LocalDateTime openedDataTime;
+
+    public LocalDateTime getOpenedDataTime() {
+        return openedDataTime;
+    }
+
+    public void setOpenedDataTime(LocalDateTime openedDataTime) {
+        this.openedDataTime = openedDataTime;
+    }
+
+    public Member getOwner() {
+        return owner;
+    }
 
     public String getName() {
         return name;
@@ -40,5 +58,14 @@ public class Study {
 
     public void setStatus(StudyStatus status) {
         this.status = status;
+    }
+
+    public void setOwner(Member owner) {
+        this.owner = owner;
+    }
+
+    public void open() {
+        this.status=StudyStatus.OPENED;
+        this.openedDataTime = LocalDateTime.now();
     }
 }
