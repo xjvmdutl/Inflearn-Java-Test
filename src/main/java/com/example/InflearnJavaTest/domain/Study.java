@@ -1,14 +1,26 @@
 package com.example.InflearnJavaTest.domain;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
+@Entity
 public class Study {
+
+    //속성에도 예약어가 있다면 생성 안된다.
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Enumerated(EnumType.STRING)
     private StudyStatus status = StudyStatus.DRAFT;
 
-    private int limit;
+    private int limits;
 
     private String name;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
     private Member owner;
 
     private LocalDateTime openedDataTime;
@@ -33,23 +45,26 @@ public class Study {
         this.name = name;
     }
 
-    public Study(int limit, String name) {
-        this.limit = limit;
+    public Study(int limits, String name) {
+        this.limits = limits;
         this.name = name;
     }
 
-    public Study(int limit) {
-        if(limit < 0)
+    public Study(int limits) {
+        if(limits < 0)
             throw  new IllegalArgumentException("limit는 0보다 커야합니다");
-        this.limit = limit;
+        this.limits = limits;
+    }
+
+    protected Study() {
     }
 
     public int getLimit() {
-        return limit;
+        return limits;
     }
 
-    public void setLimit(int limit) {
-        this.limit = limit;
+    public void setLimit(int limits) {
+        this.limits = limits;
     }
 
     public StudyStatus getStatus() {
