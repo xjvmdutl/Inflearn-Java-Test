@@ -12,8 +12,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -21,6 +28,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.File;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,31 +43,47 @@ import static org.mockito.Mockito.*;
 @ActiveProfiles("test")
 @Testcontainers //도커 테스트용 컨테이너
 @Slf4j
+@ContextConfiguration(initializers = StudyServiceTest2.ContainerPropertyInitializer.class)
 class StudyServiceTest2 {
 
     @Mock MemberService memberService;
 
     @Autowired
     StudyRepository studyRepository;
-    
+    /*
+    @Autowired
+    Environment environment;
+    */
+    @Value("${containers.port}") int port;
+
     //여러 필드에서 공유 가능
     /*
     static PostgreSQLContainer postgreSQLContainer = new PostgreSQLContainer()
        .withDatabaseName("studytest");
      */
     //로컬에 해당 이미지가 있으면 가지고 오고 없으면 원격에 해당 이미지가 있다면 다운받아 가지고 온다.
+
+    /*
     @Container
     static GenericContainer postgreSQLContainer = new GenericContainer("postgres")
             .withExposedPorts(5432) //도커와 연결된 호스트 포트를 확인할 수 있다.
             .withEnv("POSTGRES_DB","studytest")
             //.waitingFor(Wait.forListeningPort()) //대기 시간을 알려줄 수 있다
             ;
+s     */
+    @Container
+    static DockerComposeContainer composeContainer = new DockerComposeContainer(
+            new File("src/test/resources/docker-compose.yml")
+    ).withExposedService("study-db",5432);
+    //12.4 이후부터 사용하면 동작이 된다.
+
+    /*
     @BeforeAll
     public static void beforeAll(){
         Slf4jLogConsumer logConsumer = new Slf4jLogConsumer(log); //로그 보기
         postgreSQLContainer.followOutput(logConsumer);
     }
-
+    */
     /*
     @BeforeAll
     static void beforeAll(){
@@ -74,12 +98,13 @@ class StudyServiceTest2 {
     */
     @BeforeEach
     void beforeEach(){
-        System.out.println(postgreSQLContainer.getMappedPort(5432));
+        //System.out.println(postgreSQLContainer.getMappedPort(5432));
         //System.out.println(postgreSQLContainer.getLogs());
         //container를 static으로 하지 않고 실행하면 너무 느리기 때문에 BeforeEach로 데이터를 지우는 식으로 테스트하는것이 더 빠르다.
+        //System.out.println(environment.getProperty("containers.port"));
+        System.out.println(port);
         studyRepository.deleteAll();
     }
-
     @Test
     void createStudyService(){
         StudyService studyService = new StudyService(memberService,studyRepository);
@@ -199,6 +224,23 @@ class StudyServiceTest2 {
         assertNotNull(study.getOpenedDataTime());
         // TODO memberService의 notify(study)가 호출 됐는지 확인.
         then(memberService).should(times(1)).notify(study);
+    }
+    /*
+    //프로퍼티 추가
+    static class ContainerPropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext>{
+        @Override
+        public void initialize(ConfigurableApplicationContext context) {
+            TestPropertyValues.of("container.port="+postgreSQLContainer.getMappedPort(5432)) //여러개 프로퍼티 등록가능
+                                .applyTo(context.getEnvironment());
+        }
+    }
+     */
 
+    static class ContainerPropertyInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext>{
+        @Override
+        public void initialize(ConfigurableApplicationContext context) {
+            TestPropertyValues.of("container.port="+composeContainer.getServicePort("study-db",5432))
+                    .applyTo(context.getEnvironment());
+        }
     }
 }
