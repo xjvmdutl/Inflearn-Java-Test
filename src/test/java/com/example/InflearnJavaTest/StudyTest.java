@@ -174,14 +174,15 @@ class StudyTest {
 
     static class StudyAggregator implements ArgumentsAggregator{
         //반드시 static inner class이거나 public class여야 한다.
+
         @Override
         public Object aggregateArguments(ArgumentsAccessor argumentsAccessor, ParameterContext parameterContext) throws ArgumentsAggregationException {
+
             Study study = new Study(argumentsAccessor.getInteger(0)
                     ,argumentsAccessor.getString(1));
             return study;
         }
     }
-
     int value = 1;
     @BeforeAll //더이상 static 일 필요가 없다
     void beforeAll(){
